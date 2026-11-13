@@ -152,7 +152,7 @@ app.post('/api/tests', upload.single('coverImage'), (req, res) => {
 // Security code verification
 app.post('/api/verify-code', (req, res) => {
   const { code } = req.body;
-  if (code === 'MOTA') {
+  if (code === 'MOTABOY') {
     res.json({ success: true });
   } else {
     res.status(401).json({ success: false, message: 'Invalid code' });

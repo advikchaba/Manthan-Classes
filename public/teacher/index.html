@@ -29,7 +29,6 @@
 <input type="password" id="gateCode" class="field-input" placeholder="Security code" autocomplete="current-password" autofocus>
 <div id="gateError" class="error"></div>
 <button class="btn-primary gate-btn" onclick="checkCode()">Enter dashboard</button>
-<p class="gate-hint">Demo code: MOTA</p>
 </div>
 </div>
 
@@ -283,7 +282,7 @@
 <script>
 function checkCode() {
 const code = document.getElementById("gateCode").value;
-if (code === "MOTA") {
+if (code === "MOTABOY") {
 document.getElementById("loginGate").style.display = "none";
 document.getElementById("appShell").style.display = "block";
 document.getElementById("gateError").textContent = "";
