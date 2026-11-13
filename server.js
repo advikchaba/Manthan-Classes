@@ -1,15 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const multer = require('multer');
 
 const app = express();
-const PORT = 3000;
-const DATA_FILE = path.join(__dirname, 'data.json');
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
+const PORT = Number(process.env.PORT) || 3000;
 
-// Ensure uploads directory exists
+// On Vercel the deployment bundle is read-only and only os.tmpdir() is writable.
+// Locally everything stays next to this file so data survives restarts.
+const IS_SERVERLESS = Boolean(process.env.VERCEL);
+const STORAGE_DIR = IS_SERVERLESS ? os.tmpdir() : __dirname;
+const DATA_FILE = path.join(STORAGE_DIR, 'data.json');
+const UPLOAD_DIR = path.join(STORAGE_DIR, 'uploads');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// Ensure the directories we write to exist
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // Multer config for file uploads
@@ -22,7 +29,6 @@ const upload = multer({ storage });
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(UPLOAD_DIR));
-app.use(express.static(__dirname));
 
 // Data helpers
 function loadData() {
@@ -168,6 +174,14 @@ app.delete('/api/tests/:id', (req, res) => {
   res.json({ success: true });
 });
 
-app.listen(PORT, () => {
-  console.log('Manthan Classes backend running on http://localhost:' + PORT);
-});
+// Static site (used by `node server.js` locally; on Vercel the CDN serves public/)
+app.use(express.static(PUBLIC_DIR));
+
+// Only listen when started directly — on Vercel the exported app is the handler.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log('Manthan Classes backend running on http://localhost:' + PORT);
+  });
+}
+
+module.exports = app;

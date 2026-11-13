@@ -1,8 +1,9 @@
 {
   "name": "manthan-classes",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "build": "echo 'No build step needed'"
+    "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
