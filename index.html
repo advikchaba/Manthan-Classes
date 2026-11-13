@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manthan Classes</title>
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('mc-theme');
+      var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-left">
+    <span class="brand-mark" aria-hidden="true">M</span>
+    <span class="nav-brand">Manthan Classes</span>
+  </div>
+  <div class="nav-actions">
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+      <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+    </button>
+    <button class="nav-btn-icon" onclick="window.location.href='teacher/index.html'">Admin</button>
+  </div>
+</nav>
+
+<div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-eyebrow">Student portal</span>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="sidebar-item active" data-section="dashboard">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.4 12 3.5l8.5 6.9"/><path d="M5.8 9.6V20h12.4V9.6"/><path d="M10 20v-5.2h4V20"/></svg>
+      <span class="item-label">Home</span>
+    </button>
+    <button class="sidebar-item" data-section="courses">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5Z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20"/><path d="M8 7.5h8"/></svg>
+      <span class="item-label">Courses</span>
+    </button>
+    <button class="sidebar-item" data-section="classes">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="12.5" height="13" rx="2.5"/><path d="m15.5 10.5 5.5-3v9l-5.5-3"/></svg>
+      <span class="item-label">Live Class</span>
+    </button>
+    <button class="sidebar-item" data-section="material">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5L13.5 3Z"/><path d="M13.5 3v5.5H19"/><path d="M8.5 13.5h7M8.5 17h4.5"/></svg>
+      <span class="item-label">Study Material</span>
+    </button>
+    <button class="sidebar-item" data-section="tests">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5h6v2.2H9z"/><path d="M9 5.6H7.2a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h9.6a2 2 0 0 0 2-2V7.6a2 2 0 0 0-2-2H15"/><path d="m8.8 13.6 2 2 4.4-4.4"/></svg>
+      <span class="item-label">Tests</span>
+    </button>
+  </nav>
+</aside>
+
+<main class="content" id="app"></main>
+</div>
+
+<template id="tpl-dashboard">
+<div class="page student-page">
+  <section class="hero">
+    <div class="hero-main">
+      <p class="eyebrow">CBSE &middot; Class 11 &amp; 12</p>
+      <h1 class="hero-title">Welcome back</h1>
+      <p class="hero-sub">Live classes, recorded lectures, notes and practice tests &mdash; everything for your board prep in one place.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="render('classes')">Join a live class</button>
+        <button class="btn-ghost" onclick="render('material')">Browse study material</button>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-value" id="statLive">&mdash;</span>
+        <span class="stat-label">Live classes</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="statCourses">&mdash;</span>
+        <span class="stat-label">Courses</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="statTests">&mdash;</span>
+        <span class="stat-label">Tests</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="statMaterial">&mdash;</span>
+        <span class="stat-label">Resources</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-section">
+    <div class="section-head">
+      <h2 class="section-title">Featured courses</h2>
+      <button class="link-btn" onclick="render('courses')">View all</button>
+    </div>
+    <div class="featured-grid">
+      <div class="featured-card" onclick="render('courses')">
+        <div class="featured-thumb placeholder">11</div>
+        <div class="featured-body">
+          <span class="featured-badge">CBSE</span>
+          <h3 class="card-title">Class 11th</h3>
+          <p class="card-sub">Physics, Chemistry, Maths, Biology</p>
+        </div>
+        <span class="featured-price">Coming soon</span>
+        <svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </div>
+      <div class="featured-card" onclick="render('courses')">
+        <div class="featured-thumb placeholder">12</div>
+        <div class="featured-body">
+          <span class="featured-badge">CBSE</span>
+          <h3 class="card-title">Class 12th</h3>
+          <p class="card-sub">Physics, Chemistry, Maths, Biology</p>
+        </div>
+        <span class="featured-price">Coming soon</span>
+        <svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <div class="dash-split">
+    <section class="panel-section">
+      <div class="section-head">
+        <h2 class="section-title">Live classes</h2>
+        <span class="count-chip">Today</span>
+      </div>
+      <div class="live-grid">
+        <div class="live-card">
+          <div class="live-main">
+            <span class="live-chip"><span class="dot"></span>Live</span>
+            <h3 class="card-title">Physics &mdash; Class 11</h3>
+            <p class="card-sub">Newton's Laws of Motion</p>
+          </div>
+          <button class="btn-outline meet-btn" onclick="openMeet('https://meet.google.com/new')">Join</button>
+        </div>
+        <div class="live-card">
+          <div class="live-main">
+            <span class="live-chip"><span class="dot"></span>Live</span>
+            <h3 class="card-title">Mathematics &mdash; Class 12</h3>
+            <p class="card-sub">Calculus &amp; Algebra</p>
+          </div>
+          <button class="btn-outline meet-btn" onclick="openMeet('https://meet.google.com/new')">Join</button>
+        </div>
+        <div class="live-card">
+          <div class="live-main">
+            <span class="live-chip"><span class="dot"></span>Live</span>
+            <h3 class="card-title">Chemistry &mdash; Class 11</h3>
+            <p class="card-sub">Organic Chemistry</p>
+          </div>
+          <button class="btn-outline meet-btn" onclick="openMeet('https://meet.google.com/new')">Join</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <div class="section-head">
+        <h2 class="section-title">Practice tests</h2>
+        <button class="link-btn" onclick="render('tests')">All tests</button>
+      </div>
+      <div class="test-grid">
+        <div class="test-card" onclick="openTest('Physics Practice Test')">
+          <div>
+            <h3 class="card-title">Physics Practice Test</h3>
+            <p class="card-sub">Class 11 &bull; 20 MCQs</p>
+          </div>
+        </div>
+        <div class="test-card" onclick="openTest('Maths Practice Test')">
+          <div>
+            <h3 class="card-title">Maths Practice Test</h3>
+            <p class="card-sub">Class 12 &bull; 25 MCQs</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel-section">
+    <div class="section-head">
+      <h2 class="section-title">Study material</h2>
+      <button class="link-btn" onclick="render('material')">View all</button>
+    </div>
+    <div class="study-grid">
+      <div class="study-card">
+        <h3 class="card-title">Physics Notes</h3>
+        <p class="card-sub">Chapter 1 &bull; Class 11</p>
+        <button class="btn-outline">View</button>
+      </div>
+      <div class="study-card">
+        <h3 class="card-title">Maths Formula Sheet</h3>
+        <p class="card-sub">Class 12</p>
+        <button class="btn-outline">View</button>
+      </div>
+      <div class="study-card">
+        <h3 class="card-title">Chemistry Guide</h3>
+        <p class="card-sub">Revision &bull; Class 11</p>
+        <button class="btn-outline">View</button>
+      </div>
+      <div class="study-card">
+        <h3 class="card-title">Biology Question Bank</h3>
+        <p class="card-sub">Class 12</p>
+        <button class="btn-outline">View</button>
+      </div>
+    </div>
+  </section>
+</div>
+</template>
+
+<template id="tpl-courses">
+<div class="page student-page">
+  <header class="page-header">
+    <button class="btn-back" onclick="render('dashboard')">Home</button>
+    <h1>Courses</h1>
+    <p class="section-desc">Recorded lectures and notes for CBSE Class 11 &amp; 12.</p>
+  </header>
+  <div class="course-grid" id="courseGrid"></div>
+</div>
+</template>
+
+<template id="tpl-classes">
+<div class="page student-page">
+  <header class="page-header">
+    <button class="btn-back" onclick="render('dashboard')">Home</button>
+    <h1>Live classes</h1>
+    <p class="section-desc">Join a scheduled session with your teacher.</p>
+  </header>
+  <div class="class-grid" id="classGrid"></div>
+</div>
+</template>
+
+<template id="tpl-material">
+<div class="page student-page">
+  <header class="page-header">
+    <button class="btn-back" onclick="render('dashboard')">Home</button>
+    <h1>Study material</h1>
+    <p class="section-desc">Notes, formula sheets and question banks.</p>
+  </header>
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label class="field-label" for="filterGrade">Grade</label>
+      <select id="filterGrade" class="field-select">
+        <option value="">All grades</option>
+        <option value="11">Class 11</option>
+        <option value="12">Class 12</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="field-label" for="filterSubject">Subject</label>
+      <select id="filterSubject" class="field-select">
+        <option value="">All subjects</option>
+        <option value="physics">Physics</option>
+        <option value="maths">Mathematics</option>
+        <option value="chemistry">Chemistry</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="field-label" for="searchMaterial">Search</label>
+      <input type="text" id="searchMaterial" class="field-input" placeholder="Search material">
+    </div>
+  </div>
+  <div class="grid" id="materialGrid"></div>
+</div>
+</template>
+
+<template id="tpl-tests">
+<div class="page student-page">
+  <header class="page-header">
+    <button class="btn-back" onclick="render('dashboard')">Home</button>
+    <h1>Practice tests</h1>
+    <p class="section-desc">Timed MCQ sets &mdash; results are scored instantly.</p>
+  </header>
+  <div class="grid" id="testGrid"></div>
+</div>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>
