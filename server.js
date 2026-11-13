@@ -30,12 +30,26 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(UPLOAD_DIR));
 
+// Seed content that ships with the deployment. On Vercel the bundle is read-only
+// and /tmp is wiped between instances, so a fresh instance re-seeds from this file.
+let SEED_DATA = null;
+try {
+  SEED_DATA = require('./data.seed.json');
+} catch (e) {
+  SEED_DATA = null;
+}
+
+function defaultData() {
+  if (!SEED_DATA) return { classes: [], courses: [], materials: [], tests: [] };
+  return JSON.parse(JSON.stringify(SEED_DATA));
+}
+
 // Data helpers
 function loadData() {
   try {
     return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
   } catch (e) {
-    return { classes: [], courses: [], materials: [], tests: [] };
+    return defaultData();
   }
 }
 
@@ -44,7 +58,7 @@ function saveData(data) {
 }
 
 // Initialize data file if missing
-if (!fs.existsSync(DATA_FILE)) saveData({ classes: [], courses: [], materials: [], tests: [] });
+if (!fs.existsSync(DATA_FILE)) saveData(defaultData());
 
 // API Routes
 

@@ -1,0 +1,94 @@
+{
+  "classes": [
+    {
+      "id": 1794568626975,
+      "name": "Maths class 11",
+      "grade": "11",
+      "subject": "maths",
+      "meetLink": "https://meet.google.com/npjguknrcj",
+      "createdAt": "2026-11-13T11:17:06.975Z"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1794568758038,
+      "name": "course 1",
+      "classLevel": "11",
+      "subject": "maths",
+      "price": "0",
+      "coverImage": "/uploads/1794568728675-Bronze hardstuck thumbnail.png",
+      "videos": [
+        "/uploads/1794568728685-2026-07-04 12-03-15.mp4",
+        "/uploads/1794568729245-2026-07-13 20-26-22.mkv"
+      ],
+      "videoFile": "/uploads/1794568728685-2026-07-04 12-03-15.mp4",
+      "pdfFile": null,
+      "createdAt": "2026-11-13T11:19:18.038Z"
+    }
+  ],
+  "materials": [],
+  "tests": [
+    {
+      "id": 1794573894079,
+      "name": "ok",
+      "classLevel": "11",
+      "subject": "maths",
+      "timeLimit": 300,
+      "coverImage": null,
+      "questions": [
+        {
+          "question": "ok",
+          "options": [
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D"
+          ],
+          "correct": 0
+        },
+        {
+          "question": "ok",
+          "options": [
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D"
+          ],
+          "correct": 0
+        }
+      ],
+      "createdAt": "2026-11-13T12:44:54.079Z"
+    },
+    {
+      "id": 1794573914825,
+      "name": "ok",
+      "classLevel": "11",
+      "subject": "physics",
+      "timeLimit": 300,
+      "coverImage": "/uploads/1794573914716-Bronze hardstuck thumbnail.png",
+      "questions": [
+        {
+          "question": "ok",
+          "options": [
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D"
+          ],
+          "correct": 0
+        },
+        {
+          "question": "ok",
+          "options": [
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D"
+          ],
+          "correct": 0
+        }
+      ],
+      "createdAt": "2026-11-13T12:45:14.825Z"
+    }
+  ]
+}
