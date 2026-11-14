@@ -8,14 +8,25 @@ function initThemeToggle() {
   const btn = document.getElementById('themeToggle');
   if (!btn) return;
 
-  const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
-  btn.setAttribute('aria-pressed', String(isDark()));
+  const root = document.documentElement;
+  const isDark = () => root.getAttribute('data-theme') === 'dark';
+  const meta = document.querySelector('meta[name="theme-color"]');
+
+  const sync = () => {
+    btn.setAttribute('aria-pressed', String(isDark()));
+    btn.setAttribute('aria-label', isDark() ? 'Switch to light theme' : 'Switch to dark theme');
+    if (meta) meta.setAttribute('content', isDark() ? '#0f1112' : '#f2f3ef');
+  };
+
+  sync();
 
   btn.addEventListener('click', () => {
     const next = isDark() ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    btn.setAttribute('aria-pressed', String(next === 'dark'));
+    root.classList.add('no-transitions');
+    root.setAttribute('data-theme', next);
+    sync();
     try { localStorage.setItem('mc-theme', next); } catch (e) { /* storage blocked */ }
+    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('no-transitions')));
   });
 }
 
@@ -33,24 +44,50 @@ const templates = {
 
 const app = document.getElementById("app");
 
-const chevron = '<svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+const SUBJECTS = { physics: 'Physics', maths: 'Mathematics', chemistry: 'Chemistry', biology: 'Biology' };
 
-const subjectLabel = (s) => {
-  const map = { physics: 'Physics', maths: 'Mathematics', chemistry: 'Chemistry', biology: 'Biology' };
+const subjectName = (s) => {
   if (!s) return '';
-  return map[String(s).toLowerCase()] || s;
+  const key = String(s).toLowerCase();
+  return SUBJECTS[key] || s;
 };
 
-const meta = (...parts) => parts.filter(p => p !== null && p !== undefined && p !== '').join(' · ');
+const dotFor = (s) => `<span class="dot ${String(s || '').toLowerCase()}" aria-hidden="true"></span>`;
+
+const metas = (parts) => {
+  const clean = parts.filter((p) => p !== null && p !== undefined && p !== '');
+  if (!clean.length) return '';
+  return `<span class="row-meta">${clean.map((p) => `<span>${p}</span>`).join('')}</span>`;
+};
 
 const priceLabel = (price) => (price && Number(price) > 0 ? 'Rs. ' + price : 'Free');
+
+const videoCount = (c) => (c.videos ? c.videos.length : (c.videoFile ? 1 : 0));
+
+const lectureLabel = (n) => n + (n === 1 ? ' lecture' : ' lectures');
+
+const attr = (v) => String(v == null ? '' : v).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
 
 function initialsFor(name) {
   const clean = String(name || '').replace(/[^a-zA-Z0-9 ]/g, '').trim();
   if (!clean) return 'MC';
   const words = clean.split(/\s+/);
-  const raw = words.length > 1 ? words[0][0] + words[1][0] : clean.slice(0, 2);
-  return raw.toUpperCase();
+  return (words.length > 1 ? words[0][0] + words[1][0] : clean.slice(0, 2)).toUpperCase();
+}
+
+const emptyRow = (title, sub) => `
+<div class="row">
+  <div class="row-main">
+    <div class="row-text">
+      <div class="row-title">${title}</div>
+      ${metas([sub])}
+    </div>
+  </div>
+</div>`;
+
+function setCount(id, n) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = n ? ' (' + n + ')' : '';
 }
 
 function render(templateId) {
@@ -71,37 +108,145 @@ function openMeet(url) {
   window.open(url, "_blank");
 }
 
+/* ---------------------------------------------------------
+   Rows
+   --------------------------------------------------------- */
+
+function courseRow(c) {
+  const thumb = c.coverImage
+    ? `<img class="thumb" src="${encodeURI(c.coverImage)}" alt="">`
+    : `<span class="thumb-placeholder" aria-hidden="true">${initialsFor(c.name)}</span>`;
+
+  return `
+<button class="row" onclick="openCourse(${c.id})">
+  <span class="row-main">
+    ${thumb}
+    <span class="row-text">
+      <span class="row-title">${c.name}</span>
+      ${metas([subjectName(c.subject), c.classLevel ? 'Class ' + c.classLevel : '', lectureLabel(videoCount(c))])}
+    </span>
+  </span>
+  <span class="row-end"><span class="row-value">${priceLabel(c.price)}</span></span>
+</button>`;
+}
+
+function testRow(t) {
+  const count = t.questions ? t.questions.length : 0;
+  return `
+<button class="row" onclick="openTest('${attr(t.name)}')">
+  <span class="row-main">
+    ${dotFor(t.subject)}
+    <span class="row-text">
+      <span class="row-title">${t.name}</span>
+      ${metas([t.classLevel ? 'Class ' + t.classLevel : '', subjectName(t.subject), count + (count === 1 ? ' question' : ' questions')])}
+    </span>
+  </span>
+  <span class="row-end"><span class="row-value">Start</span></span>
+</button>`;
+}
+
+function materialRow(m, compact) {
+  const subject = subjectName(m.subject);
+  const grade = m.grade ? 'Class ' + m.grade : '';
+  const action = m.pdfFile
+    ? `<a class="btn btn-quiet" href="${encodeURI(m.pdfFile)}" target="_blank" rel="noopener">Open PDF</a>`
+    : `<span class="row-value">PDF</span>`;
+
+  if (compact) {
+    return `
+<div class="row material-card">
+  <div class="row-main">
+    ${dotFor(m.subject)}
+    <div class="row-text">
+      <div class="row-title">${m.title}</div>
+      ${metas([grade, subject])}
+    </div>
+  </div>
+</div>`;
+  }
+
+  return `
+<div class="row material-card">
+  <div class="row-main">
+    ${dotFor(m.subject)}
+    <div class="row-text">
+      <div class="row-title">${m.title}</div>
+      ${metas([grade, subject])}
+    </div>
+  </div>
+  <div class="row-end">${action}</div>
+</div>`;
+}
+
+function classRow(c) {
+  return `
+<div class="row">
+  <div class="row-main">
+    ${dotFor(c.subject)}
+    <div class="row-text">
+      <div class="row-title">${c.name}</div>
+      ${metas([subjectName(c.subject), c.grade ? 'Class ' + c.grade : ''])}
+    </div>
+  </div>
+  <div class="row-end">
+    <button class="btn btn-quiet" onclick="openMeet('${attr(c.meetLink || 'https://meet.google.com/new')}')">Join</button>
+  </div>
+</div>`;
+}
+
+/* ---------------------------------------------------------
+   Course detail
+   --------------------------------------------------------- */
+
 function openCourse(id) {
   fetch(API + '/courses').then(r => r.json()).then(courses => {
     const c = courses.find(x => x.id == id);
     if (!c) { alert('Course not found'); return; }
     const videos = c.videos || (c.videoFile ? [c.videoFile] : []);
+
     app.innerHTML = `
 <div class="page student-page">
-  <header class="page-header">
+  <header class="page-head">
     <button class="btn-back" onclick="render('courses')">All courses</button>
     <h1>${c.name}</h1>
-    <p class="section-desc">${meta(subjectLabel(c.subject), c.classLevel ? 'Class ' + c.classLevel : '', priceLabel(c.price))}</p>
+    <p class="page-sub">${[subjectName(c.subject), c.classLevel ? 'Class ' + c.classLevel : '', priceLabel(c.price)].filter(Boolean).join(', ')}</p>
   </header>
-  ${c.coverImage ? `<img class="course-cover" src="${encodeURI(c.coverImage)}" alt="${c.name}">` : ''}
-  <div class="section-head">
-    <h2 class="section-title">Videos</h2>
-    <span class="count-chip">${videos.length}</span>
-  </div>
-  ${videos.length ? videos.map((v, i) => `
-  <div class="card video-card">
-    <h3 class="card-title">Lecture ${i + 1}</h3>
-    <video controls preload="metadata"><source src="${encodeURI(v)}"></video>
-    <a href="${encodeURI(v)}" target="_blank" class="btn-outline">Open in new tab</a>
-  </div>`).join('') : '<div class="card"><p class="card-sub">No videos uploaded for this course yet.</p></div>'}
+  ${c.coverImage ? `<img class="course-cover" src="${encodeURI(c.coverImage)}" alt="">` : ''}
+  <section class="block">
+    <header class="block-head">
+      <h2 class="block-title">Lectures<span class="block-count">${videos.length}</span></h2>
+    </header>
+    ${videos.length
+      ? videos.map((v, i) => `
+    <div class="video-card">
+      <div class="row-title">Lecture ${i + 1}</div>
+      <video controls preload="metadata"><source src="${encodeURI(v)}"></video>
+      <a class="btn btn-quiet" href="${encodeURI(v)}" target="_blank" rel="noopener">Open video</a>
+    </div>`).join('')
+      : emptyRow('No lectures uploaded yet', 'They appear here once your teacher adds them.')}
+  </section>
   ${c.pdfFile ? `
-  <div class="section-head" style="margin-top:24px;">
-    <h2 class="section-title">PDF material</h2>
-  </div>
-  <a href="${encodeURI(c.pdfFile)}" target="_blank" class="btn-outline">Open PDF</a>` : ''}
+  <section class="block">
+    <header class="block-head"><h2 class="block-title">PDF material</h2></header>
+    <div class="list">
+      <div class="row">
+        <div class="row-main">
+          <div class="row-text">
+            <div class="row-title">Course notes</div>
+            ${metas([subjectName(c.subject)])}
+          </div>
+        </div>
+        <div class="row-end"><a class="btn btn-quiet" href="${encodeURI(c.pdfFile)}" target="_blank" rel="noopener">Open PDF</a></div>
+      </div>
+    </div>
+  </section>` : ''}
 </div>`;
   });
 }
+
+/* ---------------------------------------------------------
+   Tests
+   --------------------------------------------------------- */
 
 function openTest(title) {
   fetch(API + '/tests').then(r => r.json()).then(tests => {
@@ -119,34 +264,39 @@ function renderTest(test) {
 
   app.innerHTML = `
 <div class="page student-page">
-  <header class="page-header">
+  <header class="page-head">
     <button class="btn-back" onclick="clearInterval(window.__mcTimer); render('tests')">All tests</button>
     <h1>${test.name}</h1>
-    <p class="section-desc">Class ${test.classLevel || ''} &bull; ${test.subject || ''} &bull; ${questions.length} questions</p>
-    <div id="timer" class="timer">${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}</div>
+    <p class="page-sub">${[test.classLevel ? 'Class ' + test.classLevel : '', subjectName(test.subject), questions.length + (questions.length === 1 ? ' question' : ' questions')].filter(Boolean).join(', ')}</p>
   </header>
-  <form id="quizForm" class="form-card">
-    ${questions.map((q, i) => `
-    <div class="mcq-row">
-      <span class="field-label">Question ${i + 1}</span>
-      <p class="card-title" style="font-weight:500;margin:2px 0 4px;">${q.question}</p>
-      <div class="options">
-        ${q.options.map((opt, j) => `
-        <div class="option-item">
-          <input type="radio" name="q${i}" value="${j}" id="q${i}_${j}">
-          <label for="q${i}_${j}">${opt}</label>
-        </div>`).join('')}
-      </div>
-    </div>`).join('')}
-    <button type="submit" class="btn-primary">Submit test</button>
-  </form>
+  <section class="block">
+    <header class="block-head">
+      <h2 class="block-title">Questions</h2>
+      <span id="timer" class="timer">${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}</span>
+    </header>
+    <form id="quizForm">
+      ${questions.map((q, i) => `
+      <div class="mcq-row">
+        <p class="q-text"><span class="q-num">${i + 1}</span><span>${q.question}</span></p>
+        <div class="options">
+          ${q.options.map((opt, j) => `
+          <div class="option-item">
+            <input type="radio" name="q${i}" value="${j}" id="q${i}_${j}">
+            <label for="q${i}_${j}">${opt}</label>
+          </div>`).join('')}
+        </div>
+      </div>`).join('')}
+      <button type="submit" class="btn-primary" style="margin-top:22px;">Submit test</button>
+    </form>
+  </section>
 </div>`;
 
   window.__mcTimer = timerInterval = setInterval(() => {
     timeLeft--;
     const timerEl = document.getElementById("timer");
     if (timerEl) {
-      timerEl.textContent = `${Math.floor(Math.max(timeLeft, 0) / 60)}:${String(Math.max(timeLeft, 0) % 60).padStart(2, '0')}`;
+      const safe = Math.max(timeLeft, 0);
+      timerEl.textContent = `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
       if (timeLeft <= 30) timerEl.classList.add('low');
     }
     if (timeLeft <= 0) {
@@ -164,8 +314,7 @@ function renderTest(test) {
       const selected = document.querySelector(`input[name="q${i}"]:checked`);
       if (selected && parseInt(selected.value) === q.correct) score++;
     });
-    window.__lastTest = test;
-showResults(test, score, questions.length);
+    showResults(test, score, questions.length);
   });
 }
 
@@ -173,19 +322,23 @@ function showResults(test, score, total) {
   const pct = total ? Math.round(score / total * 100) : 0;
   app.innerHTML = `
 <div class="page student-page">
-  <header class="page-header">
+  <header class="page-head">
     <button class="btn-back" onclick="render('tests')">All tests</button>
-    <h1>Test results</h1>
-    <p class="section-desc">${test.name}</p>
+    <h1>${test.name}</h1>
+    <p class="page-sub">${[test.classLevel ? 'Class ' + test.classLevel : '', subjectName(test.subject)].filter(Boolean).join(', ')}</p>
   </header>
-  <div class="card result-card">
+  <div class="result-card">
     <span class="result-score">${score} / ${total}</span>
-    <p class="result-meta">${pct}% correct</p>
-    <button class="btn-primary" onclick="renderTest(window.__lastTest)">Reattempt</button>
+    <span class="result-meta">${pct}% correct</span>
+    <button class="btn-primary" onclick='renderTest(${JSON.stringify(test).replace(/'/g, "&#39;")})'>Try again</button>
     <button class="btn-outline" onclick="render('tests')">Back to tests</button>
   </div>
 </div>`;
 }
+
+/* ---------------------------------------------------------
+   Data
+   --------------------------------------------------------- */
 
 async function fetchJSON(url) {
   try {
@@ -197,84 +350,50 @@ async function fetchJSON(url) {
   }
 }
 
-/* ---------------------------------------------------------
-   Lists
-   --------------------------------------------------------- */
-
 async function loadCourses() {
   const grid = document.getElementById("courseGrid");
   if (!grid) return;
   const courses = await fetchJSON(API + '/courses');
-  if (courses.length === 0) {
-    grid.innerHTML = '<div class="card"><p class="card-sub">No courses available yet. Check back soon.</p></div>';
-    return;
-  }
-  grid.innerHTML = courses.map(c => `
-<div class="course-card" role="button" tabindex="0" onclick="openCourse(${c.id})">
-  <div>
-    <span class="course-badge">Class ${c.classLevel || '—'}</span>
-    <h3 class="card-title">${c.name}</h3>
-    <p class="card-sub">${meta(subjectLabel(c.subject), priceLabel(c.price), (c.videos ? c.videos.length : (c.videoFile ? 1 : 0)) + ' videos')}</p>
-  </div>
-  ${c.coverImage ? `<img class="course-thumb" src="${encodeURI(c.coverImage)}" alt="">` : ''}
-  ${chevron}
-</div>`).join('');
+  grid.innerHTML = courses.length
+    ? courses.map(courseRow).join('')
+    : emptyRow('No courses yet', 'Your teacher will publish them here.');
 }
 
 async function loadClasses() {
   const grid = document.getElementById("classGrid");
   if (!grid) return;
   const classes = await fetchJSON(API + '/classes');
-  if (classes.length === 0) {
-    grid.innerHTML = '<div class="card"><p class="card-sub">No live classes scheduled yet.</p></div>';
-    return;
-  }
-  grid.innerHTML = classes.map(c => `
-<div class="card">
-  <span class="live-chip"><span class="dot"></span>Live</span>
-  <h3 class="card-title" style="margin-top:8px;">${c.name}</h3>
-  <p class="card-sub" style="margin-bottom:14px;">${meta(subjectLabel(c.subject), c.grade ? 'Class ' + c.grade : '')}</p>
-  <button class="btn-outline meet-btn" onclick="openMeet('${c.meetLink || 'https://meet.google.com/new'}')">Join meeting</button>
-</div>`).join('');
+  grid.innerHTML = classes.length
+    ? classes.map(classRow).join('')
+    : emptyRow('No live classes scheduled', 'Sessions appear here when your teacher opens one.');
 }
 
 async function loadMaterials() {
   const grid = document.getElementById("materialGrid");
   if (!grid) return;
   const materials = await fetchJSON(API + '/materials');
-  if (materials.length === 0) {
-    grid.innerHTML = '<div class="card"><p class="card-sub">No study material uploaded yet.</p></div>';
-    return;
-  }
-  grid.innerHTML = materials.map(m => `
-<div class="card material-card">
-  <h3 class="card-title">${m.title}</h3>
-  <p class="card-sub" style="margin:4px 0 12px;">${meta(m.grade ? 'Class ' + m.grade : '', subjectLabel(m.subject))}</p>
-  ${m.pdfFile
-    ? `<a href="${encodeURI(m.pdfFile)}" target="_blank" class="btn-outline">View PDF</a>`
-    : '<button class="btn-outline">View</button>'}
-</div>`).join('');
+  grid.innerHTML = materials.length
+    ? materials.map(m => materialRow(m, false)).join('')
+    : emptyRow('No study material yet', 'Notes and PDFs uploaded by your teacher will appear here.');
 }
 
 async function loadTests() {
   const grid = document.getElementById("testGrid");
   if (!grid) return;
   const tests = await fetchJSON(API + '/tests');
-  if (tests.length === 0) {
-    grid.innerHTML = '<div class="card"><p class="card-sub">No tests published yet.</p></div>';
-    return;
-  }
-  grid.innerHTML = tests.map(t => `
-<div class="test-card" role="button" tabindex="0" onclick="openTest('${t.name.replace(/'/g, "\\'")}')">
-  <div>
-    <h3 class="card-title">${t.name}</h3>
-    <p class="card-sub">${meta(t.classLevel ? 'Class ' + t.classLevel : '', subjectLabel(t.subject), (t.questions ? t.questions.length : 0) + ' questions')}</p>
-  </div>
-  ${t.coverImage ? `<img class="course-thumb" src="${encodeURI(t.coverImage)}" alt="">` : ''}
-</div>`).join('');
+  grid.innerHTML = tests.length
+    ? tests.map(testRow).join('')
+    : emptyRow('No tests yet', 'Practice tests appear here once they are published.');
 }
 
 async function loadDashboard() {
+  const dateEl = document.getElementById('todayLabel');
+  if (dateEl) {
+    dateEl.textContent = new Date().toLocaleDateString('en-IN', {
+      weekday: 'long', day: 'numeric', month: 'long'
+    });
+  }
+
   const [courses, classes, materials, tests] = await Promise.all([
     fetchJSON(API + '/courses'),
     fetchJSON(API + '/classes'),
@@ -282,66 +401,52 @@ async function loadDashboard() {
     fetchJSON(API + '/tests')
   ]);
 
-  const setStat = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = String(value).padStart(2, '0');
-  };
-  setStat('statLive', classes.length);
-  setStat('statCourses', courses.length);
-  setStat('statTests', tests.length);
-  setStat('statMaterial', materials.length);
+  setCount('courseCount', courses.length);
+  setCount('testCount', tests.length);
+  setCount('materialCount', materials.length);
 
-  const featuredGrid = document.querySelector(".featured-grid");
-  if (featuredGrid && courses.length > 0) {
-    featuredGrid.innerHTML = courses.slice(0, 4).map(c => `
-<div class="featured-card" onclick="openCourse(${c.id})">
-  ${c.coverImage
-    ? `<img class="featured-thumb" src="${encodeURI(c.coverImage)}" alt="">`
-    : `<div class="featured-thumb placeholder">${initialsFor(c.name)}</div>`}
-  <div class="featured-body">
-    <span class="featured-badge">Class ${c.classLevel || '—'}</span>
-    <h3 class="card-title">${c.name}</h3>
-    <p class="card-sub">${meta(subjectLabel(c.subject), (c.videos ? c.videos.length : (c.videoFile ? 1 : 0)) + ' videos')}</p>
+  const nowSlot = document.getElementById('nowSlot');
+  if (nowSlot) {
+    if (classes.length) {
+      const c = classes[0];
+      nowSlot.innerHTML = `
+<div class="list live-slot">
+  <div class="row is-live">
+    <div class="row-main">
+      <div class="row-text">
+        <div class="row-title">${c.name}</div>
+        <div class="row-meta"><span class="live-tag"><span class="pulse" aria-hidden="true"></span>Live now</span><span>${[subjectName(c.subject), c.grade ? 'Class ' + c.grade : ''].filter(Boolean).join(', ')}</span></div>
+      </div>
+    </div>
+    <div class="row-end">
+      <button class="btn btn-solid" onclick="openMeet('${attr(c.meetLink || 'https://meet.google.com/new')}')">Join class</button>
+    </div>
   </div>
-  <span class="featured-price">${priceLabel(c.price)}</span>
-  ${chevron}
-</div>`).join('');
+</div>`;
+    } else {
+      nowSlot.innerHTML = `<div class="list live-slot">${emptyRow('No live class right now', 'Check back when your teacher starts a session.')}</div>`;
+    }
   }
 
-  const liveGrid = document.querySelector(".live-grid");
-  if (liveGrid && classes.length > 0) {
-    liveGrid.innerHTML = classes.map(c => `
-<div class="live-card">
-  <div class="live-main">
-    <span class="live-chip"><span class="dot"></span>Live</span>
-    <h3 class="card-title">${c.name}</h3>
-    <p class="card-sub">${meta(subjectLabel(c.subject), c.grade ? 'Class ' + c.grade : '')}</p>
-  </div>
-  <button class="btn-outline meet-btn" onclick="openMeet('${c.meetLink || 'https://meet.google.com/new'}')">Join</button>
-</div>`).join('');
+  const courseList = document.getElementById('courseList');
+  if (courseList) {
+    courseList.innerHTML = courses.length
+      ? courses.slice(0, 4).map(courseRow).join('')
+      : emptyRow('No courses yet', 'Your teacher will publish them here.');
   }
 
-  const studyGrid = document.querySelector(".study-grid");
-  if (studyGrid && materials.length > 0) {
-    studyGrid.innerHTML = materials.slice(0, 4).map(m => `
-<div class="study-card">
-  <h3 class="card-title">${m.title}</h3>
-  <p class="card-sub">${meta(m.grade ? 'Class ' + m.grade : '', subjectLabel(m.subject))}</p>
-  ${m.pdfFile
-    ? `<a href="${encodeURI(m.pdfFile)}" target="_blank" class="btn-outline">View</a>`
-    : '<button class="btn-outline">View</button>'}
-</div>`).join('');
+  const testList = document.getElementById('testList');
+  if (testList) {
+    testList.innerHTML = tests.length
+      ? tests.slice(0, 4).map(testRow).join('')
+      : emptyRow('No tests yet', 'Practice tests appear here once they are published.');
   }
 
-  const testGrid = document.querySelector(".test-grid");
-  if (testGrid && tests.length > 0) {
-    testGrid.innerHTML = tests.slice(0, 4).map(t => `
-<div class="test-card" role="button" tabindex="0" onclick="openTest('${t.name.replace(/'/g, "\\'")}')">
-  <div>
-    <h3 class="card-title">${t.name}</h3>
-    <p class="card-sub">${meta(t.classLevel ? 'Class ' + t.classLevel : '', subjectLabel(t.subject), (t.questions ? t.questions.length : 0) + ' MCQs')}</p>
-  </div>
-</div>`).join('');
+  const materialList = document.getElementById('materialList');
+  if (materialList) {
+    materialList.innerHTML = materials.length
+      ? materials.slice(0, 4).map(m => materialRow(m, true)).join('')
+      : emptyRow('No notes yet', 'Notes and PDFs uploaded by your teacher will appear here.');
   }
 }
 
@@ -356,17 +461,17 @@ function initMaterialFilters() {
   if (!gradeFilter || !subjectFilter || !searchInput) return;
 
   function filterMaterials() {
-    const cards = document.querySelectorAll("#materialGrid .material-card");
+    const rows = document.querySelectorAll("#materialGrid .material-card");
     const g = gradeFilter.value;
     const s = subjectFilter.value;
     const q = searchInput.value.toLowerCase();
-    cards.forEach(card => {
-      const title = card.querySelector(".card-title").textContent.toLowerCase();
-      const sub = card.querySelector(".card-sub").textContent.toLowerCase();
-      const matchGrade = !g || sub.includes("class " + g);
-      const matchSubject = !s || sub.includes(s);
-      const matchSearch = title.includes(q) || sub.includes(q);
-      card.style.display = (matchGrade && matchSubject && matchSearch) ? "" : "none";
+    rows.forEach(row => {
+      const title = row.querySelector(".row-title").textContent.toLowerCase();
+      const meta = row.querySelector(".row-meta") ? row.querySelector(".row-meta").textContent.toLowerCase() : '';
+      const matchGrade = !g || meta.includes("class " + g);
+      const matchSubject = !s || meta.includes(s);
+      const matchSearch = title.includes(q) || meta.includes(q);
+      row.style.display = (matchGrade && matchSubject && matchSearch) ? "" : "none";
     });
   }
 
