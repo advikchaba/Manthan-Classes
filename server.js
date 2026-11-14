@@ -188,8 +188,15 @@ app.delete('/api/tests/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// Static site (used by `node server.js` locally; on Vercel the CDN serves public/)
+// Static site
 app.use(express.static(PUBLIC_DIR));
+
+app.get('/teacher', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'teacher', 'index.html'));
+});
+app.get('/teacher/', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'teacher', 'index.html'));
+});
 
 // Only listen when started directly — on Vercel the exported app is the handler.
 if (require.main === module) {

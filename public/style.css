@@ -21,24 +21,24 @@
     Helvetica, Arial, sans-serif;
 
   /* surfaces */
-  --paper: #f2f3ef;
+  --paper: #f8f9fb;
   --surface: #ffffff;
   --surface-2: #f7f8f4;
   --surface-3: #eceee7;
 
   /* ink */
-  --ink: #15181a;
-  --ink-2: #5b615d;
-  --ink-3: #878d87;
+  --ink: #0a192f;
+  --ink-2: #5a6069;
+  --ink-3: #8b919a;
 
   /* lines */
-  --rule: #dde0d8;
-  --rule-2: #c8ccc2;
+  --rule: #e2e4e9;
+  --rule-2: #c9ccd4;
 
   /* accents, used for state only */
-  --marker: #f2e873;
+  --marker: #007AFF;
   --marker-soft: #fbf7cd;
-  --live: #c1432b;
+  --live: #e53e3e;
   --live-soft: #fbeae5;
 
   /* subject coding */
@@ -108,7 +108,7 @@ html.no-transitions * {
 }
 
 body {
-  background: var(--paper);
+  background: transparent;
   color: var(--ink);
   line-height: 1.5;
   font-size: 14px;
@@ -178,7 +178,7 @@ video {
   gap: 16px;
   min-height: var(--nav-h);
   padding: 0 24px;
-  background: var(--paper);
+  background: transparent;
   border-bottom: 1px solid var(--rule);
 }
 
@@ -277,7 +277,7 @@ video {
   flex: none;
   padding: 20px 12px;
   border-right: 1px solid var(--rule);
-  background: var(--paper);
+  background: transparent;
   overflow-y: auto;
 }
 
@@ -1281,7 +1281,7 @@ video {
   place-items: center;
   min-height: 100dvh;
   padding: 24px;
-  background: var(--paper);
+  background: transparent;
 }
 
 .gate-card {
@@ -1356,7 +1356,7 @@ video {
     padding: 6px 16px;
     border-right: 0;
     border-bottom: 1px solid var(--rule);
-    background: var(--paper);
+    background: transparent;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -1444,3 +1444,5 @@ video {
     animation: none;
   }
 }
+
+
