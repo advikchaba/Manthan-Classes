@@ -321,7 +321,6 @@ void main(){
     const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
 
     function render() {
-      const s = settings;
       const presence = state.intro * state.intro * state.intro * (state.intro * (state.intro * 6 - 15) + 10);
       gl.bindVertexArray(vao);
       sizeTarget(view.fieldWidth, view.fieldHeight);

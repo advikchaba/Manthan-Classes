@@ -26,6 +26,7 @@ function initThemeToggle() {
     root.setAttribute('data-theme', next);
     sync();
     try { localStorage.setItem('mc-theme', next); } catch (e) { /* storage blocked */ }
+    mountHeroBeams();
     requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('no-transitions')));
   });
 }
@@ -90,10 +91,44 @@ function setCount(id, n) {
   if (el) el.textContent = n ? ' (' + n + ')' : '';
 }
 
+/* ---------------------------------------------------------
+   Beams (dashboard hero)
+   --------------------------------------------------------- */
+
+let beamsTeardown = null;
+
+function mountHeroBeams() {
+  if (beamsTeardown) {
+    beamsTeardown();
+    beamsTeardown = null;
+  }
+  const host = document.getElementById('heroBeams');
+  if (!host || typeof window.initBeams !== 'function') return;
+
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  beamsTeardown = window.initBeams(host, {
+    color: dark ? '#ffffff' : '#007AFF',
+    lightMode: !dark,
+    beamWidth: 140,
+    rotation: 30,
+    speed: 0.6,
+    glow: 1.1,
+    opacity: dark ? 0.45 : 0.5,
+    fade: 0.5,
+    sharpness: 0.5,
+    grain: 0.3,
+    mouseStrength: 0.8
+  }) || null;
+}
+
 function render(templateId) {
   const tpl = templates[templateId];
   if (!tpl) return;
   const clone = tpl.cloneNode(true);
+  if (beamsTeardown) {
+    beamsTeardown();
+    beamsTeardown = null;
+  }
   app.innerHTML = "";
   app.appendChild(clone);
   app.scrollTop = 0;
@@ -101,7 +136,7 @@ function render(templateId) {
   if (templateId === "courses") loadCourses();
   if (templateId === "classes") loadClasses();
   if (templateId === "tests") loadTests();
-  if (templateId === "dashboard") loadDashboard();
+  if (templateId === "dashboard") { mountHeroBeams(); loadDashboard(); }
 }
 
 function openMeet(url) {
